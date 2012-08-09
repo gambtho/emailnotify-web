@@ -1,0 +1,23 @@
+*.class
+*.DS_Store
+
+# Package Files #
+*.jar
+*.war
+
+# gwt caches and compiled units #
+tasker/war/tasker/
+tasker/gwt-unitCache/
+tasker/test-classes/
+tasker/www-test/
+
+# boilerplate generated classes #
+tasker/.apt_generated/
+
+# more caches and things from deploy #
+tasker/war/WEB-INF/deploy/
+tasker/war/WEB-INF/classes/
+
+# App engine generated #
+tasker/war/WEB-INF/appengine-generated/
+
