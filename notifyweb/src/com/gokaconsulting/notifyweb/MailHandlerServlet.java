@@ -1,12 +1,14 @@
 package com.gokaconsulting.notifyweb;
 
 import java.io.IOException;
+import java.util.List;
 import java.util.Properties;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.Date;
 
 import javax.jdo.PersistenceManager;
+import javax.jdo.Query;
 import javax.mail.Address;
 import javax.mail.MessagingException;
 import javax.mail.Multipart;
@@ -19,9 +21,10 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import org.jsoup.Jsoup;
-import org.jsoup.nodes.Document;
 
 import com.gokaconsulting.notifyweb.PMF;
+import com.google.appengine.api.datastore.Key;
+import com.google.appengine.api.datastore.KeyFactory;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 
@@ -62,37 +65,7 @@ public class MailHandlerServlet extends HttpServlet {
 			{
 				logger.log(Level.SEVERE, "Error getting message text: ", e);
 			}
-/*			
-			// get body and attachment
-			// from
-			// http://jeremyblythe.blogspot.com/2009/12/gae-128-fixes-mail-but-not-jaxb.html
-			Object content = message.getContent();
-
-			
-//			byte[] imageData = null;
-			if (content instanceof String) {
-				messageBody = (String) content;
-			} else if (content instanceof Multipart) {
-				Multipart multipart = (Multipart) content;
-				int partCount = multipart.getCount();
-				
-				logger.info("Number of parts: " + partCount);
-				
-				Part part = multipart.getBodyPart(0);
-				Part part2 = multipart.getBodyPart(1);
-				Object partContent = part.getContent();
-				if (partContent instanceof String) {
-					messageBody = (String) partContent;
-					logger.info("In part 1: " + messageBody);
-				}
-				Object partContent2 = part2.getContent();
-				if(partContent instanceof String) {
-					logger.info("In part 2: " + (String)partContent2);
-				}
-				// extract attached image if any
-//				imageData = getMailAttachmentBytes(multipart);
-			}
-*/			
+		
 			if(textIsHtml)
 			{
 				if(messageBody!=null)
@@ -122,13 +95,19 @@ public class MailHandlerServlet extends HttpServlet {
 			    {
 			    	logger.info("From address found: " + tokens[i+1]);
 			    	fromAddress = tokens[i+1];
+			    	break;
 			    }
 			    else if(tokens[i].contains("From:"))
 			    {
 			    	logger.info("Found from in token: " + tokens[i]);
 			    	fromAddress = tokens[i+1];
+			    	break;
 			    }
 			}
+			
+			fromAddress = fromAddress.replaceAll("<", "");
+			fromAddress = fromAddress.replaceAll(">To:", "");
+			fromAddress = fromAddress.trim();
 			    	
 			Notification n = new Notification(fromAddress, userEmail, sentDate, 
 					messageBody, subject);
@@ -160,6 +139,80 @@ public class MailHandlerServlet extends HttpServlet {
 		} catch (MessagingException e) {
 			logger.log(Level.SEVERE, "Error: ", e);
 		}
+	}
+	
+	public void doGet(HttpServletRequest req, HttpServletResponse resp)
+			throws IOException {
+
+		PersistenceManager pm = PMF.get().getPersistenceManager();
+		Gson gson = new GsonBuilder().excludeFieldsWithoutExposeAnnotation()
+				.create();
+
+		String user = req.getParameter("user");
+
+			if (user != null) {
+				logger.info("Returning all emails for: " + user);
+
+				Query q = pm.newQuery(Notification.class);
+				q.setFilter("completor == user");
+				q.setOrdering("sentDate desc");
+				q.declareParameters("String user");
+
+				try {
+
+					@SuppressWarnings("unchecked")
+					List<Notification> results = (List<Notification>) q.execute(user);
+					logger.info("Count of emails found for user: " + user
+							+ " is: " + results.size());
+					if (!results.isEmpty()) {
+						for (Notification n : results) {
+							logger.info("Notification ID is: " + n.getId()
+									+ " subject is: " + n.getSubject());
+							if (n.getId() == null) {
+								// TODO: Figure out why this is happening
+								logger.severe("Task id for task: "
+										+ n.getKey().getId() + " was 0");
+								n.setId(n.getKey().getId());
+							}
+						}
+					}
+					gson.toJson(results, resp.getWriter());
+					resp.setContentType("application/json");
+				} finally {
+					pm.close();
+				}
+			}
+		
+	}
+
+	public void doDelete(HttpServletRequest req, HttpServletResponse resp)
+			throws IOException {
+
+		PersistenceManager pm = PMF.get().getPersistenceManager();
+
+		String id = req.getParameter("id");
+		// String userID = req.getParameter("user");
+		if (id != null && Integer.parseInt(id) > 0) {
+			logger.info("Delete requested for Task: " + id);
+			try {
+				Key k = KeyFactory.createKey(Notification.class.getSimpleName(),
+						Long.valueOf(id));
+				Notification n = pm.getObjectById(Notification.class, k);
+				
+				pm.deletePersistent(n);
+				logger.info("Delete succesful for Notification: " + id);
+			} catch (Exception e) {
+				logger.log(Level.SEVERE, "Unable to delete Notification: " + id, e);
+				resp.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR,
+						"Notification: " + id + " not found for deletion");
+			} finally {
+				pm.close();
+			}
+		} else {
+			logger.log(Level.WARNING,
+					"Delete request without valid notification parameter");
+		}
+		resp.setContentType("application/json");
 	}
 /*
 	/**
@@ -231,7 +284,38 @@ public class MailHandlerServlet extends HttpServlet {
 			}
 		}
 	}
-*/
+	
+	/*			
+			// get body and attachment
+			// from
+			// http://jeremyblythe.blogspot.com/2009/12/gae-128-fixes-mail-but-not-jaxb.html
+			Object content = message.getContent();
+
+			
+//			byte[] imageData = null;
+			if (content instanceof String) {
+				messageBody = (String) content;
+			} else if (content instanceof Multipart) {
+				Multipart multipart = (Multipart) content;
+				int partCount = multipart.getCount();
+				
+				logger.info("Number of parts: " + partCount);
+				
+				Part part = multipart.getBodyPart(0);
+				Part part2 = multipart.getBodyPart(1);
+				Object partContent = part.getContent();
+				if (partContent instanceof String) {
+					messageBody = (String) partContent;
+					logger.info("In part 1: " + messageBody);
+				}
+				Object partContent2 = part2.getContent();
+				if(partContent instanceof String) {
+					logger.info("In part 2: " + (String)partContent2);
+				}
+				// extract attached image if any
+//				imageData = getMailAttachmentBytes(multipart);
+			}
+*/	
 	private String getText(Part p) throws MessagingException, IOException {
 		if (p.isMimeType("text/*")) {
 			String s = (String) p.getContent();
