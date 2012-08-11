@@ -18,12 +18,17 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import org.jsoup.Jsoup;
+import org.jsoup.nodes.Document;
+
 import com.gokaconsulting.notifyweb.PMF;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 
 public class MailHandlerServlet extends HttpServlet {
 	private static final long serialVersionUID = 6815532253864651508L;
+	private static final String legalString =  "The information in this Internet Email is confidential and may be legally privileged. It is intended solely for the addressee. Access to this Email by anyone else is unauthorized. If you are not the intended recipient, any disclosure, copying, distribution or any action taken or omitted to be taken in reliance on it, is prohibited and may be unlawful. When addressed to our clients any opinions or advice contained in this Email are subject to the terms and conditions expressed in any applicable governing The Home Depot terms of business or client engagement letter. The Home Depot disclaims all responsibility and liability for the accuracy and content of this attachment and for any damages or losses arising from any inaccuracies, errors, viruses, e.g., worms, trojan horses, etc., or other items of a destructive nature, which may be contained in this attachment and shall not be liable for direct, indirect, consequential or special damage...";
+	private boolean textIsHtml = false;
 	private final Logger logger = Logger.getLogger(MailHandlerServlet.class
 			.getName());
 
@@ -36,7 +41,9 @@ public class MailHandlerServlet extends HttpServlet {
 
 			String subject = message.getSubject();
 			String userEmail = " ";
-			Date sentDate = message.getSentDate();;
+			Date sentDate = message.getSentDate();
+			String messageBody = "";
+			
 //			Boolean highImportance;
 
 			Address[] from = message.getFrom();
@@ -47,27 +54,82 @@ public class MailHandlerServlet extends HttpServlet {
 
 			logger.info("Receieved message from " + userEmail + " subject "
 					+ subject);
-
+			try 
+			{
+				messageBody = getText(message);
+			}
+			catch (Exception e)
+			{
+				logger.log(Level.SEVERE, "Error getting message text: ", e);
+			}
+/*			
 			// get body and attachment
 			// from
 			// http://jeremyblythe.blogspot.com/2009/12/gae-128-fixes-mail-but-not-jaxb.html
 			Object content = message.getContent();
 
-			String messageBody = "";
+			
 //			byte[] imageData = null;
 			if (content instanceof String) {
 				messageBody = (String) content;
 			} else if (content instanceof Multipart) {
 				Multipart multipart = (Multipart) content;
+				int partCount = multipart.getCount();
+				
+				logger.info("Number of parts: " + partCount);
+				
 				Part part = multipart.getBodyPart(0);
+				Part part2 = multipart.getBodyPart(1);
 				Object partContent = part.getContent();
 				if (partContent instanceof String) {
 					messageBody = (String) partContent;
+					logger.info("In part 1: " + messageBody);
+				}
+				Object partContent2 = part2.getContent();
+				if(partContent instanceof String) {
+					logger.info("In part 2: " + (String)partContent2);
 				}
 				// extract attached image if any
 //				imageData = getMailAttachmentBytes(multipart);
 			}
+*/			
+			if(textIsHtml)
+			{
+				if(messageBody!=null)
+				{
+					logger.info("Message before jsoup: " + messageBody);
+					
+				    messageBody = Jsoup.parse(messageBody.replaceAll("(?i)<br[^>]*>", "br2nl").replaceAll("\n", "br2nl")).text();
+				    messageBody = messageBody.replaceAll("br2nl ", "\n").replaceAll("br2nl", "\n").trim();
+					
+					logger.info("Message after jsoup: " + messageBody);
+				}
+				else 
+				{
+					logger.info("Html with null message body");
+				}
+			}
 			
+			messageBody = messageBody.replace(legalString, " ");
+			messageBody = messageBody.replace("________________________________", " ");
+			
+			String delims = "[ ]+";
+			String[] tokens = messageBody.split(delims);
+			for (int i = 0; i < tokens.length; i++)
+			{
+//			    logger.info("Token: " + i + " is: " + tokens[i]);
+			    if(tokens[i].equalsIgnoreCase("From:"))
+			    {
+			    	logger.info("From address found: " + tokens[i+1]);
+			    	fromAddress = tokens[i+1];
+			    }
+			    else if(tokens[i].contains("From:"))
+			    {
+			    	logger.info("Found from in token: " + tokens[i]);
+			    	fromAddress = tokens[i+1];
+			    }
+			}
+			    	
 			Notification n = new Notification(fromAddress, userEmail, sentDate, 
 					messageBody, subject);
 			PersistenceManager pm = PMF.get().getPersistenceManager();
@@ -88,7 +150,7 @@ public class MailHandlerServlet extends HttpServlet {
 							+ n.getSubject());
 				}
 			} catch (Exception e) {
-				logger.log(Level.SEVERE, "Unable to complete email post ", e);
+				logger.log(Level.SEVERE, "Unable to complete email save: ", e);
 				resp.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR,
 						"Email post failed");
 			} finally {
@@ -169,11 +231,8 @@ public class MailHandlerServlet extends HttpServlet {
 			}
 		}
 	}
-
+*/
 	private String getText(Part p) throws MessagingException, IOException {
-
-		boolean textIsHtml = false;
-
 		if (p.isMimeType("text/*")) {
 			String s = (String) p.getContent();
 			textIsHtml = p.isMimeType("text/html");
@@ -207,8 +266,6 @@ public class MailHandlerServlet extends HttpServlet {
 					return s;
 			}
 		}
-
 		return null;
 	}
-	*/
 }

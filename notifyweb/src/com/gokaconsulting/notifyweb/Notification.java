@@ -1,6 +1,7 @@
 package com.gokaconsulting.notifyweb;
 
 import com.google.appengine.api.datastore.Key;
+import com.google.appengine.api.datastore.Text;
 
 import java.util.Date;
 import javax.jdo.annotations.IdGeneratorStrategy;
@@ -24,7 +25,7 @@ public class Notification implements Serializable {
 		this.fromAddress = fromAddress;
 		this.userEmail = userEmail;
 		this.sentDate = sentDate;
-		this.messageBody = messageBody;
+		this.messageBody = new Text(messageBody);
 		this.subject = subject;
 	}
 
@@ -50,7 +51,7 @@ public class Notification implements Serializable {
     
     @Persistent
     @Expose
-    private String messageBody;
+    private Text messageBody;
        
     @Persistent
     @Expose
@@ -97,11 +98,11 @@ public class Notification implements Serializable {
  	}
 
  	public String getMessageBody() {
- 		return messageBody;
+ 		return messageBody.toString();
  	}
 
  	public void setMessageBody(String messageBody) {
- 		this.messageBody = messageBody;
+ 		this.messageBody = new Text(messageBody);
  	}
 
  	public String getSubject() {
