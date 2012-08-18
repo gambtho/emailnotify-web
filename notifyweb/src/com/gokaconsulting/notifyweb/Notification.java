@@ -35,7 +35,7 @@ public class Notification implements Serializable {
     
 	@Persistent
     @Expose
-    private Long id;
+    private Long notifyId;
     
     @Persistent
     @Expose
@@ -66,11 +66,11 @@ public class Notification implements Serializable {
  	}
 
  	public Long getId() {
- 		return id;
+ 		return notifyId;
  	}
 
  	public void setId(Long id) {
- 		this.id = id;
+ 		this.notifyId = id;
  	}
 
  	public String getFromAddress() {
@@ -97,8 +97,8 @@ public class Notification implements Serializable {
  		this.sentDate = sentDate;
  	}
 
- 	public String getMessageBody() {
- 		return messageBody.toString();
+ 	public Text getMessageBody() {
+ 		return messageBody;
  	}
 
  	public void setMessageBody(String messageBody) {
