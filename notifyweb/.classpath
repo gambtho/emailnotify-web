@@ -7,5 +7,6 @@
 	<classpathentry kind="lib" path="war/WEB-INF/lib/jsoup-1.6.3.jar"/>
 	<classpathentry kind="lib" path="war/WEB-INF/lib/commons-lang3-3.1.jar"/>
 	<classpathentry kind="lib" path="war/WEB-INF/lib/commons-codec-1.6.jar"/>
+	<classpathentry kind="con" path="com.google.appengine.eclipse.core.GAE_CONTAINER/v1"/>
 	<classpathentry kind="output" path="war/WEB-INF/classes"/>
 </classpath>

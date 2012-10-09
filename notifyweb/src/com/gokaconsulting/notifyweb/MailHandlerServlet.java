@@ -1,12 +1,16 @@
 package com.gokaconsulting.notifyweb;
 
 import java.io.IOException;
+import java.io.OutputStreamWriter;
 import java.util.List;
 import java.util.Properties;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.Date;
 import java.lang.reflect.Type;
+import java.net.HttpURLConnection;
+import java.net.URL;
+
 import javax.jdo.PersistenceManager;
 import javax.jdo.Query;
 import javax.mail.Address;
@@ -20,6 +24,7 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import org.apache.commons.codec.binary.Base64;
 import org.jsoup.Jsoup;
 
 import com.gokaconsulting.notifyweb.PMF;
@@ -36,6 +41,11 @@ import com.google.gson.JsonSerializer;
 public class MailHandlerServlet extends HttpServlet {
 	private static final long serialVersionUID = 6815532253864651508L;
 	private static final String legalString = "The information in this Internet Email is confidential and may be legally privileged. It is intended solely for the addressee. Access to this Email by anyone else is unauthorized. If you are not the intended recipient, any disclosure, copying, distribution or any action taken or omitted to be taken in reliance on it, is prohibited and may be unlawful. When addressed to our clients any opinions or advice contained in this Email are subject to the terms and conditions expressed in any applicable governing The Home Depot terms of business or client engagement letter. The Home Depot disclaims all responsibility and liability for the accuracy and content of this attachment and for any damages or losses arising from any inaccuracies, errors, viruses, e.g., worms, trojan horses, etc., or other items of a destructive nature, which may be contained in this attachment and shall not be liable for direct, indirect, consequential or special damage...";
+	private static final String URBAN_AIRSHIP_API = "https://go.urbanairship.com/api/push/";
+	
+	//TODO: check environment if (SystemProperty.environment.value() == SystemProperty.Environment.Value.Production)
+	private static final String AIRSHIP_ID = "Bcwsh30hSEm7rUgIw7Z4pQ";
+	private static final String AIRSHIP_SECRET = "qKk0-kkTTz6AvMp4oJzXpQ";
 	private boolean textIsHtml = false;
 	private final Logger logger = Logger.getLogger(MailHandlerServlet.class
 			.getName());
@@ -116,15 +126,17 @@ public class MailHandlerServlet extends HttpServlet {
 
 			try {
 				pm.makePersistent(n);
-
+				
 				n.setId(n.getKey().getId());
 
 				Gson gson = new GsonBuilder()
 						.excludeFieldsWithoutExposeAnnotation().create();
-
+				
 				gson.toJson(n, resp.getWriter());
 				resp.setContentType("application/json");
-
+				
+				sendAlert(n);
+				
 				if (n.getId() == null || n.getId() == 0) {
 					logger.severe("Invalid notification id created for notification with subject: "
 							+ n.getSubject());
@@ -219,65 +231,45 @@ public class MailHandlerServlet extends HttpServlet {
 		resp.setContentType("application/json");
 	}
 
-	/*
-	 * /** From
-	 * http://java.sun.com/developer/onlineTraining/JavaMail/contents.html#
-	 * JavaMailMessage
-	 * 
-	 * @param attachmentInputStream
-	 * 
-	 * @param mimeMultipart
-	 * 
-	 * @return image data from attachment or null if there is none
-	 * 
-	 * @throws MessagingException
-	 * 
-	 * @throws IOException
-	 * 
-	 * private byte[] getMailAttachmentBytes(Multipart mimeMultipart) throws
-	 * MessagingException, IOException { InputStream attachmentInputStream =
-	 * null; try { for (int i = 0, n = mimeMultipart.getCount(); i < n; i++) {
-	 * String disposition = mimeMultipart.getBodyPart(i) .getDisposition(); if
-	 * (disposition == null) { continue; } if
-	 * ((disposition.equals(Part.ATTACHMENT) || (disposition
-	 * .equals(Part.INLINE)))) { attachmentInputStream =
-	 * mimeMultipart.getBodyPart(i) .getInputStream(); byte[] imageData =
-	 * getImageDataFromInputStream(attachmentInputStream); return imageData; } }
-	 * } finally { try { if (attachmentInputStream != null)
-	 * attachmentInputStream.close(); } catch (Exception e) { } } return null; }
-	 * 
-	 * public byte[] getImageDataFromInputStream(InputStream inputStream) {
-	 * BufferedInputStream bis = null; ByteArrayOutputStream bos = null; try {
-	 * bis = new BufferedInputStream(inputStream); // write it to a byte[] using
-	 * a buffer since we don't know the exact // image size byte[] buffer = new
-	 * byte[1024]; bos = new ByteArrayOutputStream(); int i = 0; while (-1 != (i
-	 * = bis.read(buffer))) { bos.write(buffer, 0, i); } byte[] imageData =
-	 * bos.toByteArray(); if (imageData.length > 1000000) { // throw new
-	 * ImageTooLargeException("from email", 1000000); } return imageData; }
-	 * catch (IOException e) { throw new RuntimeException(e); } finally { try {
-	 * if (bis != null) bis.close(); if (bos != null) bos.close(); } catch
-	 * (IOException e) { // ignore } } }
-	 * 
-	 * /* // get body and attachment // from //
-	 * http://jeremyblythe.blogspot.com/
-	 * 2009/12/gae-128-fixes-mail-but-not-jaxb.html Object content =
-	 * message.getContent();
-	 * 
-	 * 
-	 * // byte[] imageData = null; if (content instanceof String) { messageBody
-	 * = (String) content; } else if (content instanceof Multipart) { Multipart
-	 * multipart = (Multipart) content; int partCount = multipart.getCount();
-	 * 
-	 * logger.info("Number of parts: " + partCount);
-	 * 
-	 * Part part = multipart.getBodyPart(0); Part part2 =
-	 * multipart.getBodyPart(1); Object partContent = part.getContent(); if
-	 * (partContent instanceof String) { messageBody = (String) partContent;
-	 * logger.info("In part 1: " + messageBody); } Object partContent2 =
-	 * part2.getContent(); if(partContent instanceof String) {
-	 * logger.info("In part 2: " + (String)partContent2); } // extract attached
-	 * image if any // imageData = getMailAttachmentBytes(multipart); }
-	 */
+	private void sendAlert(Notification n)
+	{
+		PersistenceManager pm = PMF.get().getPersistenceManager();
+		try {
+				User user = pm.getObjectById(User.class, n.getUserEmail());
+				if (user != null) {
+			      
+			        URL url = new URL(URBAN_AIRSHIP_API);
+			        HttpURLConnection connection = (HttpURLConnection) url.openConnection();
+			        connection.setRequestMethod("POST");
+			        connection.setDoOutput(true);
+
+			        String authString = AIRSHIP_ID + ":" + AIRSHIP_SECRET;
+			        String authStringBase64 = Base64.encodeBase64String(authString.getBytes());
+			        authStringBase64 = authStringBase64.trim();
+
+			        connection.setRequestProperty("Content-type", "application/json");
+			        connection.setRequestProperty("Authorization", "Basic " + authStringBase64);
+
+			        Gson gson = new Gson();
+			        OutputStreamWriter osw = new OutputStreamWriter(connection.getOutputStream());
+			        //gson.toJson(new PushNotificationObj(n.getUserEmail(), "New Email: " + n.getSubject(), "default"), osw);
+			        osw.write("{\"aps\":{\"alert\":\"test3\", \"sound\": \"default\"}, \"aliases\": [\"thomas_gamble@homedepot.com\"]}");
+			        osw.close();
+
+			        int responseCode = connection.getResponseCode();
+			        logger.info("Notification submitted with response code: " + responseCode);
+			        logger.info("actually sent: {\"aps\":{\"alert\":\"test3\", \"sound\": \"default\"}, \"aliases\": [\"thomas_gamble@homedepot.com\"]}");
+			        logger.info(authString);
+			        logger.info(gson.toJson(new PushNotificationObj(n.getUserEmail(), "New Email: " + n.getSubject(), "default")));
+				}
+		}
+		catch (Exception e)
+		{
+			logger.log(Level.SEVERE,
+					"Error sending notification", e);
+		}
+	}
+
 	private String getText(Part p) throws MessagingException, IOException {
 		if (p.isMimeType("text/*")) {
 			String s = (String) p.getContent();
