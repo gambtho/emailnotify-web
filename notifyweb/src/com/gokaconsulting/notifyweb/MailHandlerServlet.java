@@ -67,7 +67,7 @@ public class MailHandlerServlet extends HttpServlet {
 			Address[] from = message.getFrom();
 			String fromAddress = null;
 			if (from.length > 0) {
-				userEmail = from[0].toString();
+				userEmail = from[0].toString().toLowerCase();
 			}
 
 			logger.info("Receieved message from " + userEmail + " subject "
@@ -161,7 +161,7 @@ public class MailHandlerServlet extends HttpServlet {
 		Gson gson = new GsonBuilder().excludeFieldsWithoutExposeAnnotation()
 				.registerTypeAdapter(Text.class, new TextSerializer()).create();
 
-		String user = req.getParameter("user");
+		String user = req.getParameter("user").toLowerCase();
 
 		if (user != null) {
 			logger.info("Returning all emails for: " + user);
@@ -172,7 +172,6 @@ public class MailHandlerServlet extends HttpServlet {
 			q.declareParameters("String user");
 
 			try {
-
 				@SuppressWarnings("unchecked")
 				List<Notification> results = (List<Notification>) q
 						.execute(user);
@@ -192,9 +191,16 @@ public class MailHandlerServlet extends HttpServlet {
 				}
 				gson.toJson(results, resp.getWriter());
 				resp.setContentType("application/json");
+			} catch (Exception e)
+			{
+				logger.log(Level.SEVERE, "Error: ", e);
 			} finally {
 				pm.close();
 			}
+		}
+		else
+		{
+			logger.warning("Get called without user");
 		}
 
 	}
@@ -252,13 +258,12 @@ public class MailHandlerServlet extends HttpServlet {
 
 			        Gson gson = new Gson();
 			        OutputStreamWriter osw = new OutputStreamWriter(connection.getOutputStream());
-			        //gson.toJson(new PushNotificationObj(n.getUserEmail(), "New Email: " + n.getSubject(), "default"), osw);
-			        osw.write("{\"aps\":{\"alert\":\"test3\", \"sound\": \"default\"}, \"aliases\": [\"thomas_gamble@homedepot.com\"]}");
+			        gson.toJson(new PushNotificationObj(n.getUserEmail(), "New Email: " + n.getSubject(), "default"), osw);
+			        //osw.write("{\"aps\":{\"alert\":\"New Mail!\", \"sound\": \"default\"}, \"aliases\": [\"thomas_gamble@homedepot.com\"]}");
 			        osw.close();
 
 			        int responseCode = connection.getResponseCode();
 			        logger.info("Notification submitted with response code: " + responseCode);
-			        logger.info("actually sent: {\"aps\":{\"alert\":\"test3\", \"sound\": \"default\"}, \"aliases\": [\"thomas_gamble@homedepot.com\"]}");
 			        logger.info(authString);
 			        logger.info(gson.toJson(new PushNotificationObj(n.getUserEmail(), "New Email: " + n.getSubject(), "default")));
 				}

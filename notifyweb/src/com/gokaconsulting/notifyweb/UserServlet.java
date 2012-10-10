@@ -26,7 +26,7 @@ public class UserServlet extends HttpServlet {
 	public void doPost(HttpServletRequest req, HttpServletResponse resp)
 			throws IOException {
 
-		String user = req.getParameter("user");
+		String user = req.getParameter("user").toLowerCase();
 		String token = req.getParameter("token");
 
 		if (user == null || token == null) {

@@ -1,25 +1,30 @@
 package com.gokaconsulting.notifyweb;
 
+import java.util.Arrays;
 import java.util.HashMap;
+import java.util.List;
 
 public class PushNotificationObj {
 
 	
 	public PushNotificationObj(String user, String alert, String sound)
 	{
-		this.aliases = user;
+		this.aliases = Arrays.asList(user);		
 		this.aps = new HashMap<String, String>();
-		aps.put("alert", alert);
+		
 		aps.put("sound", sound);
+		aps.put("alert", alert);
 	}
 	
-	private String aliases;
-	private HashMap<String, String> aps;
 	
-	public String getAliases() {
+	private HashMap<String, String> aps;
+	private List<String> aliases;
+	
+	public List<String> getAliases() {
 		return aliases;
 	}
-	public void setAliases(String aliases) {
+	
+	public void setAliases(List<String> aliases) {
 		this.aliases = aliases;
 	}
 

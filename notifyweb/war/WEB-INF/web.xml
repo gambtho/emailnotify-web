@@ -29,6 +29,11 @@
 	<servlet-mapping>
 		<servlet-name>userServlet</servlet-name>
 		<url-pattern>/notifyweb/user</url-pattern>
+	
+	</servlet-mapping>
+		<servlet-mapping>
+		<servlet-name>mailhandler</servlet-name>
+		<url-pattern>/notifyweb/notification</url-pattern>
 	</servlet-mapping>
 
 </web-app>
