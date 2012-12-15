@@ -25,6 +25,7 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import org.apache.commons.codec.binary.Base64;
+import org.apache.commons.lang3.StringUtils;
 import org.jsoup.Jsoup;
 
 import com.gokaconsulting.notifyweb.PMF;
@@ -58,6 +59,8 @@ public class MailHandlerServlet extends HttpServlet {
 			MimeMessage message = new MimeMessage(session, req.getInputStream());
 
 			String subject = message.getSubject();
+			subject = subject.replaceFirst("Fwd:", "");
+
 			String userEmail = " ";
 			Date sentDate = message.getSentDate();
 			String messageBody = "";
@@ -94,21 +97,32 @@ public class MailHandlerServlet extends HttpServlet {
 				}
 			}
 
-			messageBody = messageBody.replace(legalString, " ");
+			messageBody = messageBody.replaceAll(legalString, " ");
 			messageBody = messageBody.replace(
 					"________________________________", " ");
 
-			String delims = "[ ]+";
+			String delims = "[\\s\\n]+";
 			String[] tokens = messageBody.split(delims);
 			for (int i = 0; i < tokens.length; i++) {
-				// logger.info("Token: " + i + " is: " + tokens[i]);
+				//logger.info("Token: " + i + " is: " + tokens[i]);
 				if (tokens[i].equalsIgnoreCase("From:")) {
 					logger.info("From address found: " + tokens[i + 1]);
 					fromAddress = tokens[i + 1];
+					String atSymbol = "@";
+					if(!fromAddress.contains(atSymbol))
+					{
+						logger.info("Adding to the from address" + tokens[i + 2]);
+						fromAddress += " " + tokens[i + 2];
+					}
 					break;
 				} else if (tokens[i].contains("From:")) {
 					logger.info("Found from in token: " + tokens[i]);
 					fromAddress = tokens[i + 1];
+					String atSymbol = "@";
+					if(!fromAddress.contains(atSymbol))
+					{
+						fromAddress += " " + tokens[i + 2];
+					}
 					break;
 				}
 			}
@@ -258,7 +272,7 @@ public class MailHandlerServlet extends HttpServlet {
 
 			        Gson gson = new Gson();
 			        OutputStreamWriter osw = new OutputStreamWriter(connection.getOutputStream());
-			        gson.toJson(new PushNotificationObj(n.getUserEmail(), "New Email: " + n.getSubject(), "default"), osw);
+			        gson.toJson(new PushNotificationObj(n.getUserEmail(), n.getFromAddress() + ": " + n.getSubject(), "default"), osw);
 			        //osw.write("{\"aps\":{\"alert\":\"New Mail!\", \"sound\": \"default\"}, \"aliases\": [\"thomas_gamble@homedepot.com\"]}");
 			        osw.close();
 
