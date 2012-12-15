@@ -315,7 +315,7 @@ public class MailHandlerServlet extends HttpServlet {
 	private class TextSerializer implements JsonSerializer<Text> {
 		public JsonElement serialize(Text src, Type typeOfSrc,
 				JsonSerializationContext context) {
-			return new JsonPrimitive(src.toString());
+			return new JsonPrimitive(src.getValue());
 		}
 	}
 }
