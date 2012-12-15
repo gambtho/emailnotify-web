@@ -25,7 +25,6 @@ import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
 import org.apache.commons.codec.binary.Base64;
-import org.apache.commons.lang3.StringUtils;
 import org.jsoup.Jsoup;
 
 import com.gokaconsulting.notifyweb.PMF;
@@ -59,8 +58,7 @@ public class MailHandlerServlet extends HttpServlet {
 			MimeMessage message = new MimeMessage(session, req.getInputStream());
 
 			String subject = message.getSubject();
-			subject = subject.replaceFirst("Fwd:", "");
-
+			subject = subject.replaceFirst("FW:", "");
 			String userEmail = " ";
 			Date sentDate = message.getSentDate();
 			String messageBody = "";
