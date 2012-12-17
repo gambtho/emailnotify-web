@@ -11,6 +11,7 @@ import java.lang.reflect.Type;
 import java.net.HttpURLConnection;
 import java.net.URL;
 
+import javax.jdo.JDOObjectNotFoundException;
 import javax.jdo.PersistenceManager;
 import javax.jdo.Query;
 import javax.mail.Address;
@@ -18,6 +19,7 @@ import javax.mail.MessagingException;
 import javax.mail.Multipart;
 import javax.mail.Part;
 import javax.mail.Session;
+import javax.mail.internet.InternetAddress;
 import javax.mail.internet.MimeMessage;
 
 import javax.servlet.http.HttpServlet;
@@ -42,8 +44,9 @@ public class MailHandlerServlet extends HttpServlet {
 	private static final long serialVersionUID = 6815532253864651508L;
 	private static final String legalString = "The information in this Internet Email is confidential and may be legally privileged. It is intended solely for the addressee. Access to this Email by anyone else is unauthorized. If you are not the intended recipient, any disclosure, copying, distribution or any action taken or omitted to be taken in reliance on it, is prohibited and may be unlawful. When addressed to our clients any opinions or advice contained in this Email are subject to the terms and conditions expressed in any applicable governing The Home Depot terms of business or client engagement letter. The Home Depot disclaims all responsibility and liability for the accuracy and content of this attachment and for any damages or losses arising from any inaccuracies, errors, viruses, e.g., worms, trojan horses, etc., or other items of a destructive nature, which may be contained in this attachment and shall not be liable for direct, indirect, consequential or special damage...";
 	private static final String URBAN_AIRSHIP_API = "https://go.urbanairship.com/api/push/";
-	
-	//TODO: check environment if (SystemProperty.environment.value() == SystemProperty.Environment.Value.Production)
+
+	// TODO: check environment if (SystemProperty.environment.value() ==
+	// SystemProperty.Environment.Value.Production)
 	private static final String AIRSHIP_ID = "Bcwsh30hSEm7rUgIw7Z4pQ";
 	private static final String AIRSHIP_SECRET = "qKk0-kkTTz6AvMp4oJzXpQ";
 	private boolean textIsHtml = false;
@@ -63,6 +66,17 @@ public class MailHandlerServlet extends HttpServlet {
 			Date sentDate = message.getSentDate();
 			String messageBody = "";
 
+			Address[] toAddArray = message.getAllRecipients();
+			String toAddress = null;
+			if (toAddArray.length > 0) {
+				toAddress = toAddArray[0].toString().toLowerCase();
+			}
+
+			logger.info("Before conversion to address: " + toAddress);
+
+			int start = toAddress.indexOf('@');
+			toAddress = toAddress.substring(0, start).trim().toLowerCase();
+
 			// Boolean highImportance;
 
 			Address[] from = message.getFrom();
@@ -72,7 +86,7 @@ public class MailHandlerServlet extends HttpServlet {
 			}
 
 			logger.info("Receieved message from " + userEmail + " subject "
-					+ subject);
+					+ subject + " sent to: " + toAddress);
 			try {
 				messageBody = getText(message);
 			} catch (Exception e) {
@@ -102,14 +116,14 @@ public class MailHandlerServlet extends HttpServlet {
 			String delims = "[\\s\\n]+";
 			String[] tokens = messageBody.split(delims);
 			for (int i = 0; i < tokens.length; i++) {
-				//logger.info("Token: " + i + " is: " + tokens[i]);
+				// logger.info("Token: " + i + " is: " + tokens[i]);
 				if (tokens[i].equalsIgnoreCase("From:")) {
 					logger.info("From address found: " + tokens[i + 1]);
 					fromAddress = tokens[i + 1];
 					String atSymbol = "@";
-					if(!fromAddress.contains(atSymbol))
-					{
-						logger.info("Adding to the from address" + tokens[i + 2]);
+					if (!fromAddress.contains(atSymbol)) {
+						logger.info("Adding to the from address"
+								+ tokens[i + 2]);
 						fromAddress += " " + tokens[i + 2];
 					}
 					break;
@@ -117,8 +131,7 @@ public class MailHandlerServlet extends HttpServlet {
 					logger.info("Found from in token: " + tokens[i]);
 					fromAddress = tokens[i + 1];
 					String atSymbol = "@";
-					if(!fromAddress.contains(atSymbol))
-					{
+					if (!fromAddress.contains(atSymbol)) {
 						fromAddress += " " + tokens[i + 2];
 					}
 					break;
@@ -136,29 +149,65 @@ public class MailHandlerServlet extends HttpServlet {
 					messageBody, subject);
 			PersistenceManager pm = PMF.get().getPersistenceManager();
 
-			try {
-				pm.makePersistent(n);
-				
-				n.setId(n.getKey().getId());
+			if (userExists(fromAddress)) {
 
-				Gson gson = new GsonBuilder()
-						.excludeFieldsWithoutExposeAnnotation().create();
-				
-				gson.toJson(n, resp.getWriter());
-				resp.setContentType("application/json");
-				
-				sendAlert(n);
-				
-				if (n.getId() == null || n.getId() == 0) {
-					logger.severe("Invalid notification id created for notification with subject: "
-							+ n.getSubject());
+				if (toAddress.contentEquals("reset")) {
+					logger.info("Delete requested for user: " + fromAddress);
+					try {
+						User u = pm.getObjectById(User.class, fromAddress);
+						pm.deletePersistent(u);
+						logger.info("Delete succesful for user: " + fromAddress);
+					} catch (Exception e) {
+						logger.log(Level.SEVERE, "Unable to delete user: "
+								+ fromAddress, e);
+						resp.sendError(
+								HttpServletResponse.SC_INTERNAL_SERVER_ERROR,
+								"User: " + fromAddress
+										+ " not found for deletion");
+					} finally {
+						pm.close();
+					}
+				} else {
+
+					sendAlert(n);
+					
+					if (!toAddress.contentEquals("donotsave")) {
+						logger.info("Saving message - " + toAddress);
+						try {
+							pm.makePersistent(n);
+
+							n.setId(n.getKey().getId());
+
+							Gson gson = new GsonBuilder()
+									.excludeFieldsWithoutExposeAnnotation()
+									.create();
+
+							gson.toJson(n, resp.getWriter());
+							resp.setContentType("application/json");
+
+							if (n.getId() == null || n.getId() == 0) {
+								logger.severe("Invalid notification id created for notification with subject: "
+										+ n.getSubject());
+							}
+						} catch (Exception e) {
+							logger.log(Level.SEVERE,
+									"Unable to complete email save: ", e);
+							resp.sendError(
+									HttpServletResponse.SC_INTERNAL_SERVER_ERROR,
+									"Email post failed");
+						} finally {
+							pm.close();
+						}
+					}
+					else
+					{
+						logger.info("Message not saved, but alert sent");
+						pm.close();
+					}
 				}
-			} catch (Exception e) {
-				logger.log(Level.SEVERE, "Unable to complete email save: ", e);
+			} else {
 				resp.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR,
 						"Email post failed");
-			} finally {
-				pm.close();
 			}
 
 		} catch (MessagingException e) {
@@ -203,15 +252,12 @@ public class MailHandlerServlet extends HttpServlet {
 				}
 				gson.toJson(results, resp.getWriter());
 				resp.setContentType("application/json");
-			} catch (Exception e)
-			{
+			} catch (Exception e) {
 				logger.log(Level.SEVERE, "Error: ", e);
 			} finally {
 				pm.close();
 			}
-		}
-		else
-		{
+		} else {
 			logger.warning("Get called without user");
 		}
 
@@ -249,41 +295,48 @@ public class MailHandlerServlet extends HttpServlet {
 		resp.setContentType("application/json");
 	}
 
-	private void sendAlert(Notification n)
-	{
+	private void sendAlert(Notification n) {
 		PersistenceManager pm = PMF.get().getPersistenceManager();
 		try {
-				User user = pm.getObjectById(User.class, n.getUserEmail());
-				if (user != null) {
-			      
-			        URL url = new URL(URBAN_AIRSHIP_API);
-			        HttpURLConnection connection = (HttpURLConnection) url.openConnection();
-			        connection.setRequestMethod("POST");
-			        connection.setDoOutput(true);
+			User user = pm.getObjectById(User.class, n.getUserEmail());
+			if (user != null) {
 
-			        String authString = AIRSHIP_ID + ":" + AIRSHIP_SECRET;
-			        String authStringBase64 = Base64.encodeBase64String(authString.getBytes());
-			        authStringBase64 = authStringBase64.trim();
+				URL url = new URL(URBAN_AIRSHIP_API);
+				HttpURLConnection connection = (HttpURLConnection) url
+						.openConnection();
+				connection.setRequestMethod("POST");
+				connection.setDoOutput(true);
 
-			        connection.setRequestProperty("Content-type", "application/json");
-			        connection.setRequestProperty("Authorization", "Basic " + authStringBase64);
+				String authString = AIRSHIP_ID + ":" + AIRSHIP_SECRET;
+				String authStringBase64 = Base64.encodeBase64String(authString
+						.getBytes());
+				authStringBase64 = authStringBase64.trim();
 
-			        Gson gson = new Gson();
-			        OutputStreamWriter osw = new OutputStreamWriter(connection.getOutputStream());
-			        gson.toJson(new PushNotificationObj(n.getUserEmail(), n.getFromAddress() + ": " + n.getSubject(), "default"), osw);
-			        //osw.write("{\"aps\":{\"alert\":\"New Mail!\", \"sound\": \"default\"}, \"aliases\": [\"thomas_gamble@homedepot.com\"]}");
-			        osw.close();
+				connection.setRequestProperty("Content-type",
+						"application/json");
+				connection.setRequestProperty("Authorization", "Basic "
+						+ authStringBase64);
 
-			        int responseCode = connection.getResponseCode();
-			        logger.info("Notification submitted with response code: " + responseCode);
-			        logger.info(authString);
-			        logger.info(gson.toJson(new PushNotificationObj(n.getUserEmail(), "New Email: " + n.getSubject(), "default")));
-				}
-		}
-		catch (Exception e)
-		{
-			logger.log(Level.SEVERE,
-					"Error sending notification", e);
+				Gson gson = new Gson();
+				OutputStreamWriter osw = new OutputStreamWriter(
+						connection.getOutputStream());
+				gson.toJson(
+						new PushNotificationObj(n.getUserEmail(), n
+								.getFromAddress() + ": " + n.getSubject(),
+								"default"), osw);
+				// osw.write("{\"aps\":{\"alert\":\"New Mail!\", \"sound\": \"default\"}, \"aliases\": [\"thomas_gamble@homedepot.com\"]}");
+				osw.close();
+
+				int responseCode = connection.getResponseCode();
+				logger.info("Notification submitted with response code: "
+						+ responseCode);
+				logger.info(authString);
+				logger.info(gson.toJson(new PushNotificationObj(n
+						.getUserEmail(), "New Email: " + n.getSubject(),
+						"default")));
+			}
+		} catch (Exception e) {
+			logger.log(Level.SEVERE, "Error sending notification", e);
 		}
 	}
 
@@ -329,5 +382,19 @@ public class MailHandlerServlet extends HttpServlet {
 				JsonSerializationContext context) {
 			return new JsonPrimitive(src.getValue());
 		}
+	}
+
+	private boolean userExists(String user) {
+		PersistenceManager pm = PMF.get().getPersistenceManager();
+		try {
+			User tempUser = pm.getObjectById(User.class, user);
+			if (tempUser != null) {
+				return true;
+			}
+		} catch (Exception e) {
+			logger.log(Level.WARNING,
+					"Error retrieving user for received mail", e);
+		}
+		return false;
 	}
 }
