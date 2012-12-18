@@ -11,7 +11,7 @@ import java.util.Date;
 import javax.persistence.Transient;
 
 import org.apache.commons.codec.digest.DigestUtils;
-import org.apache.commons.lang3.RandomStringUtils;
+import org.apache.commons.lang.RandomStringUtils;
 
 @PersistenceCapable
 public class User implements Serializable {
@@ -87,11 +87,12 @@ public class User implements Serializable {
 	        this.salt = RandomStringUtils.randomAscii(20);
 	    }
 
-	    this.password = DigestUtils.shaHex(password + this.salt);
+	    this.password = DigestUtils.sha1Hex(password + this.salt);
+
 	}
 
 	public boolean checkPassword(String givenPassword)
 	{
-	    return (this.password.equals(DigestUtils.shaHex(givenPassword + this.salt)));
+	    return (this.password.equals(DigestUtils.sha1Hex(givenPassword + this.salt)));
 	}
 }

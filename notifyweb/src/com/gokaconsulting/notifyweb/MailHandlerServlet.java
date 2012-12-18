@@ -11,7 +11,6 @@ import java.lang.reflect.Type;
 import java.net.HttpURLConnection;
 import java.net.URL;
 
-import javax.jdo.JDOObjectNotFoundException;
 import javax.jdo.PersistenceManager;
 import javax.jdo.Query;
 import javax.mail.Address;
@@ -19,7 +18,6 @@ import javax.mail.MessagingException;
 import javax.mail.Multipart;
 import javax.mail.Part;
 import javax.mail.Session;
-import javax.mail.internet.InternetAddress;
 import javax.mail.internet.MimeMessage;
 
 import javax.servlet.http.HttpServlet;
@@ -149,7 +147,7 @@ public class MailHandlerServlet extends HttpServlet {
 					messageBody, subject);
 			PersistenceManager pm = PMF.get().getPersistenceManager();
 
-			if (userExists(fromAddress)) {
+			if (userExists(userEmail)) {
 
 				if (toAddress.contentEquals("reset")) {
 					logger.info("Delete requested for user: " + fromAddress);

@@ -3,9 +3,6 @@
 	<classpathentry kind="src" path="src"/>
 	<classpathentry kind="con" path="com.google.appengine.eclipse.core.GAE_CONTAINER"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
-	<classpathentry kind="lib" path="war/WEB-INF/lib/gson-2.2.2.jar"/>
-	<classpathentry kind="lib" path="war/WEB-INF/lib/jsoup-1.6.3.jar"/>
-	<classpathentry kind="lib" path="war/WEB-INF/lib/commons-lang3-3.1.jar"/>
-	<classpathentry kind="lib" path="war/WEB-INF/lib/commons-codec-1.6.jar"/>
+	<classpathentry kind="con" path="org.apache.ivyde.eclipse.cpcontainer.IVYDE_CONTAINER/?project=notifyweb&amp;ivyXmlPath=ivy.xml&amp;confs=*"/>
 	<classpathentry kind="output" path="war/WEB-INF/classes"/>
 </classpath>

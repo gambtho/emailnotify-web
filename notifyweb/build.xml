@@ -1,0 +1,123 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- ====================================================================== 
+     Dec 15, 2012 10:25:52 PM                                                        
+
+     project    
+     description
+                   
+     tng                                                                
+     ====================================================================== -->
+<project xmlns:ivy="antlib:org.apache.ivy.ant" name="notifyweb" default="compile">
+  
+  <property name="sdk.dir" location="${user.home}/Applications/eclipse/plugins/com.google.appengine.eclipse.sdkbundle_1.7.4/appengine-java-sdk-1.7.4" />
+  <import file="${sdk.dir}/config/user/ant-macros.xml" />
+  
+  <path id="project.classpath">
+    <pathelement path="war/WEB-INF/classes" />
+    <fileset dir="war/WEB-INF/lib">
+      <include name="**/*.jar" />
+    </fileset>
+    <fileset dir="${lib.dir}">
+      <include name="/*.jar" />
+    </fileset>
+  </path>
+  	
+    <property name="ivy.install.version" value="2.3.0-rc1" />
+    <condition property="ivy.home" value="${env.IVY_HOME}">
+      <isset property="env.IVY_HOME" />
+    </condition>
+    <property name="ivy.home" value="${user.home}/.ant" />
+    <property name="ivy.jar.dir" value="${ivy.home}/lib" />
+    <property name="ivy.jar.file" value="${ivy.jar.dir}/ivy.jar" />
+
+    <target name="download-ivy" unless="offline">
+
+        <mkdir dir="${ivy.jar.dir}"/>
+        <!-- download Ivy from web site so that it can be used even without any special installation -->
+        <get src="http://repo2.maven.org/maven2/org/apache/ivy/ivy/${ivy.install.version}/ivy-${ivy.install.version}.jar" 
+             dest="${ivy.jar.file}" usetimestamp="true"/>
+    </target>
+
+    <target name="init-ivy" depends="download-ivy">
+      <!-- try to load ivy here from ivy home, in case the user has not already dropped
+              it into ant's lib dir (note that the latter copy will always take precedence).
+              We will not fail as long as local lib dir exists (it may be empty) and
+              ivy is in at least one of ant's lib dir or the local lib dir. -->
+        <path id="ivy.lib.path">
+            <fileset dir="${ivy.jar.dir}" includes="*.jar"/>
+
+        </path>
+        <taskdef resource="org/apache/ivy/ant/antlib.xml"
+                 uri="antlib:org.apache.ivy.ant" classpathref="ivy.lib.path"/>
+    </target>	
+	
+    <target name="resolve" depends="init-ivy" description="--> retrieve dependencies with ivy">
+        <ivy:retrieve />
+    </target>
+	
+  <target name="copyjars" depends ="resolve"
+      description="Copies the App Engine JARs to the WAR.">
+    <copy
+        todir="war/WEB-INF/lib"
+        flatten="true">
+      <fileset dir="${sdk.dir}/lib/user">
+        <include name="**/*.jar" />
+      </fileset>	
+    </copy>
+  	<ivy:retrieve pattern="war/WEB-INF/lib/[artifact]-[type]-[revision].[ext]" conf="default" />
+  </target>
+
+  <target name="compile" depends="copyjars"
+      description="Compiles Java source and copies other source files to the WAR.">
+    <mkdir dir="war/WEB-INF/classes" />
+    <copy todir="war/WEB-INF/classes">
+      <fileset dir="src">
+        <exclude name="**/*.java" />
+      </fileset>
+    </copy>
+    <javac
+        srcdir="src"
+        destdir="war/WEB-INF/classes"
+        classpathref="project.classpath"
+    	includeantruntime="false"
+    	debug="on" />
+  </target>
+
+  <target name="datanucleusenhance" depends="compile"
+      description="Performs JDO enhancement on compiled data classes.">
+    <enhance_war war="war" />
+  </target>
+
+  <target name="runserver" depends="datanucleusenhance"
+      description="Starts the development server.">
+    <dev_appserver war="war" />
+  </target>
+
+  <target name="update" depends="datanucleusenhance"
+      description="Uploads the application to App Engine.">
+    <appcfg action="update" war="war" />
+  </target>
+
+  <target name="update_indexes" depends="datanucleusenhance"
+      description="Uploads just the datastore index configuration to App Engine.">
+    <appcfg action="update_indexes" war="war" />
+  </target>
+
+  <target name="rollback" depends="datanucleusenhance"
+      description="Rolls back an interrupted application update.">
+    <appcfg action="rollback" war="war" />
+  </target>
+
+  <target name="request_logs"
+      description="Downloads log data from App Engine for the application.">
+    <appcfg action="request_logs" war="war">
+      <options>
+        <arg value="--num_days=5"/>
+      </options>
+      <args>
+        <arg value="logs.txt"/>
+      </args>
+    </appcfg>
+  </target>
+
+</project>
