@@ -56,4 +56,23 @@ public class UserService {
 			pm.close();
 		}
 	}
+	
+	public boolean checkUserPassword(String user, String token)
+	{
+		PersistenceManager pm = PMF.get().getPersistenceManager();
+		try
+		{
+			logger.info("Checking password");
+			User tempUser = pm.getObjectById(User.class, user);
+			return tempUser.checkPassword(token);
+		}
+		catch (Exception e)
+		{
+			return false;
+		}
+		finally 
+		{
+			pm.close();
+		}	
+	}
 }

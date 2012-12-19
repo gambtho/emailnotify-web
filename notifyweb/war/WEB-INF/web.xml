@@ -35,5 +35,14 @@
 		<servlet-name>mailhandler</servlet-name>
 		<url-pattern>/notifyweb/notification</url-pattern>
 	</servlet-mapping>
+	
+	    <security-constraint>
+        <web-resource-collection>
+            <url-pattern>/notifyweb/*</url-pattern>
+        </web-resource-collection>
+        <user-data-constraint>
+            <transport-guarantee>CONFIDENTIAL</transport-guarantee>
+        </user-data-constraint>
+    </security-constraint>
 
 </web-app>

@@ -4,6 +4,8 @@ import com.google.appengine.api.datastore.Key;
 import com.google.appengine.api.datastore.Text;
 
 import java.util.Date;
+import java.util.logging.Logger;
+
 import javax.jdo.annotations.IdGeneratorStrategy;
 import javax.jdo.annotations.PersistenceCapable;
 import javax.jdo.annotations.Persistent;
@@ -14,19 +16,26 @@ import java.io.Serializable;
 
 import javax.persistence.Transient;
 
+import org.apache.commons.codec.binary.Base64;
+import org.apache.commons.codec.binary.StringUtils;
+
+
 @PersistenceCapable
 public class Notification implements Serializable {
+	
+	@Transient
+	private final Logger logger = Logger.getLogger(Notification.class.getName());
 	@Transient
 	private static final long serialVersionUID = -5660588353160363359L;
 
-    public Notification(String fromAddress, String userEmail, Date sentDate,
-			String messageBody, String subject) {
+    public Notification(String fromAddress, String userEmail, Date sentDate, String messageBody, String subject) {
 		super();
 		this.fromAddress = fromAddress;
 		this.userEmail = userEmail;
 		this.sentDate = sentDate;
-		this.messageBody = new Text(messageBody);
-		this.subject = subject;
+		
+		setMessageBody(messageBody);
+		setSubject(subject);
 	}
 
 	@PrimaryKey
@@ -46,6 +55,9 @@ public class Notification implements Serializable {
     private String userEmail;
     
     @Persistent
+    private String salt;
+    
+    @Persistent
     @Expose
     private Date sentDate;
     
@@ -55,7 +67,7 @@ public class Notification implements Serializable {
        
     @Persistent
     @Expose
-    private String subject;
+    private Text subject;
     
     @Persistent
     @Expose
@@ -98,20 +110,20 @@ public class Notification implements Serializable {
  	}
 
  	public Text getMessageBody() {
- 		return messageBody;
+ 		return new Text(StringUtils.newStringUtf8(Base64.decodeBase64(this.messageBody.getValue())));
  	}
 
  	public void setMessageBody(String messageBody) {
- 		this.messageBody = new Text(messageBody);
+ 		this.messageBody = new Text(Base64.encodeBase64String(StringUtils.getBytesUtf8(messageBody)));
  	}
 
  	public String getSubject() {
- 		return subject;
+ 		return StringUtils.newStringUtf8(Base64.decodeBase64(this.subject.getValue()));
  	}
 
  	public void setSubject(String subject) {
- 		this.subject = subject;
- 	}
+ 		this.subject = new Text(Base64.encodeBase64String(StringUtils.getBytesUtf8(subject)));
+  	}
 
  	public Boolean getHighImportance() {
  		return highImportance;
@@ -120,5 +132,4 @@ public class Notification implements Serializable {
  	public void setHighImportance(Boolean highImportance) {
  		this.highImportance = highImportance;
  	}
-
 }

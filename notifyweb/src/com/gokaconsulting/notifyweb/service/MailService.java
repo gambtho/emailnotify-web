@@ -154,6 +154,7 @@ public class MailService {
 	private boolean userExists(String user) {
 		PersistenceManager pm = PMF.get().getPersistenceManager();
 		try {
+			//TODO:  Add memcache for this
 			User tempUser = pm.getObjectById(User.class, user);
 			if (tempUser != null) {
 				return true;
@@ -175,6 +176,7 @@ public class MailService {
 
 	private void persistNotification(Notification n) {
 		PersistenceManager pm = PMF.get().getPersistenceManager();
+		
 		try {
 			logger.info("Saving message - ");
 			pm.makePersistent(n);
@@ -273,12 +275,10 @@ public class MailService {
 		} else {
 			fromAddress = userEmail;
 		}
-
-		Notification n = new Notification(fromAddress, userEmail, sentDate,
-				messageBody, subject);
+		logger.info("Preparing to create notification");
+		Notification n = new Notification(fromAddress, userEmail, sentDate, messageBody, subject);
 
 		if (userExists(userEmail)) {
-
 			if (toAddress.contentEquals("reset")) {
 				logger.info("Delete requested for user: " + fromAddress);
 				throw new UserDeleteException(userEmail);

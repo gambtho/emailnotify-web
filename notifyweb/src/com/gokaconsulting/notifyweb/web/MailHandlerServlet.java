@@ -15,8 +15,12 @@ import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
 import javax.servlet.http.HttpServletResponse;
 
+import org.apache.commons.codec.binary.Base64;
+import org.apache.commons.codec.binary.StringUtils;
+
 import com.gokaconsulting.notifyweb.model.Notification;
 import com.gokaconsulting.notifyweb.service.MailService;
+import com.gokaconsulting.notifyweb.service.UserService;
 
 import com.google.appengine.api.datastore.Text;
 import com.google.gson.Gson;
@@ -62,14 +66,25 @@ public class MailHandlerServlet extends HttpServlet {
 		Gson gson = new GsonBuilder().excludeFieldsWithoutExposeAnnotation()
 				.registerTypeAdapter(Text.class, new TextSerializer()).create();
 		MailService mailService = new MailService();
+		UserService userService = new UserService();
 
-		String user = req.getParameter("user").toLowerCase();
-		if (user != null) {
-			List<Notification> results = mailService.getNotifications(user);
-			gson.toJson(results, resp.getWriter());
-			resp.setContentType("application/json");
+		String user = req.getParameter("user");
+		String token = req.getParameter("token");
+
+		if (user != null && token != null) {
+
+			if (userService.checkUserPassword(user, token)) {
+				List<Notification> results = mailService.getNotifications(user
+						.toLowerCase());
+				gson.toJson(results, resp.getWriter());
+				resp.setContentType("application/json");
+			} else {
+				logger.warning("Get called with invalid password for " + user);
+				resp.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR,
+						"Incorrect password");
+			}
 		} else {
-			logger.warning("Get called without user");
+			logger.warning("Get called without user and token");
 			resp.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR,
 					"Invalid parameters provided");
 		}
@@ -95,7 +110,8 @@ public class MailHandlerServlet extends HttpServlet {
 	private class TextSerializer implements JsonSerializer<Text> {
 		public JsonElement serialize(Text src, Type typeOfSrc,
 				JsonSerializationContext context) {
-			return new JsonPrimitive(src.getValue());
+			return new JsonPrimitive(StringUtils.newStringUtf8(Base64
+					.decodeBase64(src.getValue())));
 		}
 	}
 }
