@@ -14,7 +14,7 @@
 	</servlet-mapping>
 	<servlet>
 		<servlet-name>mailhandler</servlet-name>
-		<servlet-class>com.gokaconsulting.notifyweb.MailHandlerServlet</servlet-class>
+		<servlet-class>com.gokaconsulting.notifyweb.web.MailHandlerServlet</servlet-class>
 	</servlet>
 	<servlet-mapping>
 		<servlet-name>mailhandler</servlet-name>
@@ -23,7 +23,7 @@
 
 	<servlet>
 		<servlet-name>userServlet</servlet-name>
-		<servlet-class>com.gokaconsulting.notifyweb.UserServlet</servlet-class>
+		<servlet-class>com.gokaconsulting.notifyweb.web.UserServlet</servlet-class>
 	</servlet>
 
 	<servlet-mapping>

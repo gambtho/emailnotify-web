@@ -1,4 +1,4 @@
-package com.gokaconsulting.notifyweb;
+package com.gokaconsulting.notifyweb.model;
 
 import javax.jdo.annotations.PersistenceCapable;
 import javax.jdo.annotations.Persistent;

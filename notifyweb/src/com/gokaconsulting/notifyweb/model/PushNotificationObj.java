@@ -1,4 +1,4 @@
-package com.gokaconsulting.notifyweb;
+package com.gokaconsulting.notifyweb.model;
 
 import java.util.Arrays;
 import java.util.HashMap;

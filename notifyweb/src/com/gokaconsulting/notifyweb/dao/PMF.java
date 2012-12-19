@@ -1,4 +1,4 @@
-package com.gokaconsulting.notifyweb;
+package com.gokaconsulting.notifyweb.dao;
 
 import javax.jdo.JDOHelper;
 import javax.jdo.PersistenceManagerFactory;

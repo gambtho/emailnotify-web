@@ -1,4 +1,4 @@
-package com.gokaconsulting.notifyweb;
+package com.gokaconsulting.notifyweb.model;
 
 import com.google.appengine.api.datastore.Key;
 import com.google.appengine.api.datastore.Text;
@@ -121,5 +121,4 @@ public class Notification implements Serializable {
  		this.highImportance = highImportance;
  	}
 
-    
 }
