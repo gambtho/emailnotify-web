@@ -69,6 +69,9 @@ public class AlertGateway {
 						.getUserEmail(), "New Email: " + n.getSubject(),
 						"default")));
 			}
+			else {
+				logger.info("User passed to notification was null");
+			}
 		} catch (Exception e) {
 			logger.log(Level.SEVERE, "Error sending notification", e);
 		}

@@ -50,10 +50,12 @@ public class MailService {
 		} catch (UserDeleteException e) {
 			deleteUser(e.getUser());
 		} catch (DoNotPersistEmailException e) {
-			ag.sendAlert(n);
+			ag.sendAlert(e.getNotification());
 			return n;
 		}
+		logger.info("Persisting message");
 		persistNotification(n);
+		logger.info("Sending alert for " + n.getUserEmail());
 		ag.sendAlert(n);
 		return n;
 	}
