@@ -4,18 +4,18 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 
-public class PushNotificationObj {
+public class PushNotification {
 
 	
-	public PushNotificationObj(String user, String alert, String sound)
+	public PushNotification(String user, String alert, String sound, int badge)
 	{
 		this.aliases = Arrays.asList(user);		
 		this.aps = new HashMap<String, String>();
-		
+	
 		aps.put("sound", sound);
 		aps.put("alert", alert);
+		aps.put("badge", String.valueOf(badge));
 	}
-	
 	
 	private HashMap<String, String> aps;
 	private List<String> aliases;

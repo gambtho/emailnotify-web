@@ -46,18 +46,18 @@ public class MailHandlerServlet extends HttpServlet {
 
 			MimeMessage message = new MimeMessage(session, req.getInputStream());
 
-			Notification n = mailService.processEmail(message);
+			mailService.processEmail(message);
 
-			Gson gson = new GsonBuilder()
-					.excludeFieldsWithoutExposeAnnotation().create();
-			gson.toJson(n, resp.getWriter());
+//			Gson gson = new GsonBuilder()
+//					.excludeFieldsWithoutExposeAnnotation().create();
+//			gson.toJson(n, resp.getWriter());
 
 		} catch (Exception e) {
 			resp.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR,
 					"Email post failed");
 			logger.log(Level.SEVERE, "Error: processing email post", e);
 		}
-		resp.setContentType("application/json");
+		//resp.setContentType("application/json");
 	}
 
 	public void doGet(HttpServletRequest req, HttpServletResponse resp)
@@ -73,9 +73,10 @@ public class MailHandlerServlet extends HttpServlet {
 
 		if (user != null && token != null) {
 
-			if (userService.checkUserPassword(user, token)) {
-				List<Notification> results = mailService.getNotifications(user
+			List<Notification> results = mailService.getNotifications(user
 						.toLowerCase());
+			if(	userService.checkUserPasswordforGet(user, token))
+			{
 				gson.toJson(results, resp.getWriter());
 				resp.setContentType("application/json");
 			} else {

@@ -55,9 +55,6 @@ public class Notification implements Serializable {
     private String userEmail;
     
     @Persistent
-    private String salt;
-    
-    @Persistent
     @Expose
     private Date sentDate;
     
@@ -132,4 +129,5 @@ public class Notification implements Serializable {
  	public void setHighImportance(Boolean highImportance) {
  		this.highImportance = highImportance;
  	}
+
 }

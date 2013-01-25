@@ -57,12 +57,20 @@ public class UserService {
 		}
 	}
 
-	public boolean checkUserPassword(String user, String token) {
+	public boolean checkUserPasswordforGet(String user, String token) {
 		PersistenceManager pm = PMF.get().getPersistenceManager();
 		try {
 			logger.info("Checking password");
 			User tempUser = pm.getObjectById(User.class, user);
-			return tempUser.checkPassword(token);
+			if (tempUser.checkPassword(token))
+			{
+				tempUser.setUnRead(0);
+				return true;
+			}
+			else
+			{
+				return false;
+			}
 		} catch (Exception e) {
 			return false;
 		} finally {

@@ -42,6 +42,9 @@ public class User implements Serializable {
     @Persistent
     private Date lastLogin;
     
+    @Persistent
+    private int unRead;
+    
 	public String getUserAddress() {
 		return userAddress;
 	}
@@ -94,5 +97,13 @@ public class User implements Serializable {
 	public boolean checkPassword(String givenPassword)
 	{
 	    return (this.password.equals(DigestUtils.sha1Hex(givenPassword + this.salt)));
+	}
+	
+	public int getUnRead() {
+		return unRead;
+	}
+
+	public void setUnRead(int unRead) {
+		this.unRead = unRead;
 	}
 }
