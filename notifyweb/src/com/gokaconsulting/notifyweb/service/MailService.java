@@ -1,8 +1,6 @@
 package com.gokaconsulting.notifyweb.service;
 
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
-import java.io.InputStream;
 import java.util.Date;
 import java.util.List;
 import java.util.logging.Level;
@@ -13,11 +11,9 @@ import java.util.regex.Pattern;
 import javax.jdo.PersistenceManager;
 import javax.jdo.Query;
 import javax.mail.Address;
-import javax.mail.BodyPart;
 import javax.mail.MessagingException;
 import javax.mail.Multipart;
 import javax.mail.Part;
-import javax.mail.internet.MimeBodyPart;
 import javax.mail.internet.MimeMessage;
 import javax.mail.internet.MimeMultipart;
 
@@ -246,7 +242,7 @@ public class MailService {
 		Date sentDate = message.getSentDate();
 		String messageBody = "";
 
-		boolean isGmail = false;
+		boolean isDirectForward = false;
 
 		Address[] toAddArray = message.getAllRecipients();
 		String toAddress = null;
@@ -257,15 +253,16 @@ public class MailService {
 		logger.info("Before conversion to address: " + toAddress);
 
 		// Boolean highImportance;
-
+		//TODO Change is gmail logic to check for anything not sent to appspot
+		
 		int start = toAddress.indexOf('@');
 		try {
-			if (toAddress.contains("@gmail.com")) {
-				isGmail = true;
+			if (!toAddress.contains("@notifyweb.appspotmail.com")) {
+				isDirectForward = true;
 			}
 			toAddress = toAddress.substring(0, start).trim().toLowerCase();
 		} catch (StringIndexOutOfBoundsException e) {
-			logger.log(Level.WARNING, "toAddress did not contain an @: "
+			logger.log(Level.WARNING, "Issue processing toAddress"
 					+ toAddress, e);
 		}
 
@@ -362,7 +359,7 @@ public class MailService {
             logger.info("Message after alternate parsing is: " + messageBody);
 		}
 		
-		if (isGmail) {
+		if (isDirectForward) {
 			logger.info("gmail address");
 			fromAddress = userEmail;
 

@@ -12,6 +12,9 @@
 		<servlet-name>SystemServiceServlet</servlet-name>
 		<url-pattern>/_ah/spi/*</url-pattern>
 	</servlet-mapping>
+	
+	
+	
 	<servlet>
 		<servlet-name>mailhandler</servlet-name>
 		<servlet-class>com.gokaconsulting.notifyweb.web.MailHandlerServlet</servlet-class>
@@ -31,6 +34,18 @@
 		<url-pattern>/notifyweb/user</url-pattern>
 	
 	</servlet-mapping>
+	
+	<servlet>
+		<servlet-name>purgeServlet</servlet-name>
+		<servlet-class>com.gokaconsulting.notifyweb.web.PurgeServlet</servlet-class>
+	</servlet>
+
+	<servlet-mapping>
+		<servlet-name>purgeServlet</servlet-name>
+		<url-pattern>/notifyweb/purge</url-pattern>
+	
+	</servlet-mapping>
+	
 		<servlet-mapping>
 		<servlet-name>mailhandler</servlet-name>
 		<url-pattern>/notifyweb/notification</url-pattern>
@@ -43,6 +58,15 @@
         <user-data-constraint>
             <transport-guarantee>CONFIDENTIAL</transport-guarantee>
         </user-data-constraint>
+    </security-constraint>
+    
+    <security-constraint>
+        <web-resource-collection>
+            <url-pattern>/cron/*</url-pattern>
+        </web-resource-collection>
+        <auth-constraint>
+            <role-name>admin</role-name>
+        </auth-constraint>
     </security-constraint>
 
 </web-app>

@@ -22,6 +22,7 @@ public class UserServlet extends HttpServlet {
 
 		String user = req.getParameter("user").toLowerCase();
 		String token = req.getParameter("token");
+		String type = req.getParameter("type");
 
 		if (user == null || token == null) {
 			logger.severe("User servlet accessed without user or token");
@@ -30,21 +31,29 @@ public class UserServlet extends HttpServlet {
 		}
 
 		else {
-
 			User u = null;
 			UserService userService = new UserService();
 			try {
-				u = userService.validateUser(user, token);
-				Gson gson = new GsonBuilder()
-						.excludeFieldsWithoutExposeAnnotation().create();
-
-				gson.toJson(u, resp.getWriter());
-				resp.setContentType("application/json");
+				if (type!=null && type.equals("deleteAll")) {
+					logger.warning("Delete all requested by user: " + user);
+					userService.deleteAllMessages(user);
+					resp.setContentType("application/json");
+				} else {
+					
+					u = userService.validateUser(user, token);
+					Gson gson = new GsonBuilder()
+							.excludeFieldsWithoutExposeAnnotation().create();
+					gson.toJson(u, resp.getWriter());
+					resp.setContentType("application/json");
+					logger.info(resp.getContentType());
+				}
+				
 			} catch (Exception e) {
+				logger.info("Exception in login: " + e);
 				resp.sendError(HttpServletResponse.SC_INTERNAL_SERVER_ERROR,
 						"User login failed");
 			}
+
 		}
 	}
-
 }

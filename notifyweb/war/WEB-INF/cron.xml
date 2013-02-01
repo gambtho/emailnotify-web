@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<cronentries>
+  <cron>
+    <url>/purge</url>
+    <description>Purge notifcations that are more than 24 hours old</description>
+    <schedule>every day 00:00</schedule>
+  </cron>
+</cronentries>

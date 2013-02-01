@@ -2,13 +2,16 @@ package com.gokaconsulting.notifyweb.service;
 
 import java.io.IOException;
 import java.util.Date;
+import java.util.List;
 import java.util.logging.Level;
 import java.util.logging.Logger;
 
 import javax.jdo.JDOObjectNotFoundException;
 import javax.jdo.PersistenceManager;
+import javax.jdo.Query;
 
 import com.gokaconsulting.notifyweb.dao.PMF;
+import com.gokaconsulting.notifyweb.model.Notification;
 import com.gokaconsulting.notifyweb.model.User;
 
 public class UserService {
@@ -76,5 +79,25 @@ public class UserService {
 		} finally {
 			pm.close();
 		}
+	}
+	
+	public void deleteAllMessages(String user) {
+		PersistenceManager pm = PMF.get().getPersistenceManager();
+
+		Query q = pm.newQuery(Notification.class);
+		q.setFilter("userEmail == user");
+		q.setOrdering("sentDate desc");
+		q.declareParameters("String user");
+
+		@SuppressWarnings("unchecked")
+		List<Notification> results = (List<Notification>) q.execute(user);
+		logger.info("Count of emails found for user: " + user + " is: "
+				+ results.size());
+		if (!results.isEmpty()) {
+			for (Notification n : results) {
+				pm.deletePersistent(n);
+			}
+		}
+		pm.close();
 	}
 }
