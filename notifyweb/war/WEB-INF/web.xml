@@ -13,8 +13,6 @@
 		<url-pattern>/_ah/spi/*</url-pattern>
 	</servlet-mapping>
 	
-	
-	
 	<servlet>
 		<servlet-name>mailhandler</servlet-name>
 		<servlet-class>com.gokaconsulting.notifyweb.web.MailHandlerServlet</servlet-class>

@@ -19,5 +19,6 @@ public class PurgeServlet extends HttpServlet {
 		logger.info("Beginning purge process");
 		PurgeService purgeService = new PurgeService();
 		purgeService.purge();
+		logger.info("Completed purge process");
 	}
 }

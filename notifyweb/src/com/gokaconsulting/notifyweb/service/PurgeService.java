@@ -29,7 +29,8 @@ public class PurgeService {
 		
 		Query q = pm.newQuery(Notification.class);
 		q.setFilter("sentDate < dateParam");
-		q.declareParameters("date dateParam");
+		q.declareImports("import java.util.Date");
+		q.declareParameters("Date dateParam");
 		q.deletePersistentAll(dateParam);
 	}
 }

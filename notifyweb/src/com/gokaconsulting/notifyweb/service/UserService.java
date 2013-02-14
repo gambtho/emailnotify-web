@@ -11,6 +11,7 @@ import javax.jdo.PersistenceManager;
 import javax.jdo.Query;
 
 import com.gokaconsulting.notifyweb.dao.PMF;
+import com.gokaconsulting.notifyweb.gateway.Constants;
 import com.gokaconsulting.notifyweb.model.Notification;
 import com.gokaconsulting.notifyweb.model.User;
 
@@ -67,11 +68,13 @@ public class UserService {
 			User tempUser = pm.getObjectById(User.class, user);
 			if (tempUser.checkPassword(token))
 			{
+				logger.info("Password validated");
 				tempUser.setUnRead(0);
 				return true;
 			}
 			else
 			{
+				logger.info("Incorrect password");
 				return false;
 			}
 		} catch (Exception e) {
@@ -83,7 +86,7 @@ public class UserService {
 	
 	public void deleteAllMessages(String user) {
 		PersistenceManager pm = PMF.get().getPersistenceManager();
-
+		
 		Query q = pm.newQuery(Notification.class);
 		q.setFilter("userEmail == user");
 		q.setOrdering("sentDate desc");
@@ -91,13 +94,31 @@ public class UserService {
 
 		@SuppressWarnings("unchecked")
 		List<Notification> results = (List<Notification>) q.execute(user);
-		logger.info("Count of emails found for user: " + user + " is: "
+		logger.info("Count of emails found for user: " + user + " to be deleted is: "
 				+ results.size());
 		if (!results.isEmpty()) {
 			for (Notification n : results) {
+				logger.info("Deleting notification");
 				pm.deletePersistent(n);
 			}
 		}
 		pm.close();
+		
+		if(!Constants.isProd())
+		{
+			PersistenceManager mp = PMF.get().getPersistenceManager();
+			
+			Query u = mp.newQuery(Notification.class);
+			u.setFilter("userEmail == user");
+			u.setOrdering("sentDate desc");
+			u.declareParameters("String user");
+
+			@SuppressWarnings("unchecked")
+			List<Notification> afterResults = (List<Notification>) u.execute(user);
+			logger.info("Count of emails found for user: " + user + " after delete is: "
+					+ afterResults.size());
+			mp.close();
+		}	
+		
 	}
 }

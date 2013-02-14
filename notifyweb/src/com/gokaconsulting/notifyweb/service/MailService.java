@@ -250,7 +250,7 @@ public class MailService {
 			toAddress = toAddArray[0].toString().toLowerCase();
 		}
 
-		logger.info("Before conversion to address: " + toAddress);
+		logger.info("Before conversion toAddress: " + toAddress);
 
 		// Boolean highImportance;
 		//TODO Change is gmail logic to check for anything not sent to appspot
@@ -259,8 +259,12 @@ public class MailService {
 		try {
 			if (!toAddress.contains("@notifyweb.appspotmail.com")) {
 				isDirectForward = true;
+				logger.info("Setting direct forward to true");
 			}
-			toAddress = toAddress.substring(0, start).trim().toLowerCase();
+			else
+			{
+				toAddress = toAddress.substring(0, start).trim().toLowerCase();
+			}
 		} catch (StringIndexOutOfBoundsException e) {
 			logger.log(Level.WARNING, "Issue processing toAddress"
 					+ toAddress, e);
@@ -280,9 +284,6 @@ public class MailService {
 				}
 			}
 		}
-
-		logger.info("Receieved message from " + userEmail + " subject "
-				+ subject + " sent to: " + toAddress);
 
 		messageBody = getText(message);
 	
@@ -360,17 +361,17 @@ public class MailService {
 		}
 		
 		if (isDirectForward) {
-			logger.info("gmail address");
+			logger.info("Webmail address");
 			fromAddress = userEmail;
 
 			userEmail = toAddress;
-
+			
 			Pattern pattern = Pattern.compile("<(.*?)>");
 			Matcher matcher = pattern.matcher(userEmail);
 			if (matcher.find()) {
 				userEmail = matcher.group(1);
-				logger.info("User email updated to be: " + userEmail);
 			}
+			logger.info("User email updated to be: " + userEmail);
 		}
 
 		if (fromAddress != null) {
@@ -380,7 +381,10 @@ public class MailService {
 		} else {
 			fromAddress = userEmail;
 		}
-
+		
+		logger.info("Receieved message from " + userEmail + " subject "
+				+ subject + " sent to: " + toAddress);
+		
 		logger.info("Preparing to create notification");
 		Notification n = new Notification(fromAddress, userEmail, sentDate,
 				messageBody, subject);

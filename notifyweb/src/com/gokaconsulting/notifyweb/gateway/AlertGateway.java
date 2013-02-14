@@ -18,12 +18,8 @@ import com.google.gson.Gson;
 
 public class AlertGateway {
 
-	private final Logger logger = Logger.getLogger(AlertGateway.class.getName());
-	
-	private static final String URBAN_AIRSHIP_API = "https://go.urbanairship.com/api/push/";
-	private static final String AIRSHIP_ID = "Bcwsh30hSEm7rUgIw7Z4pQ";
-	private static final String AIRSHIP_SECRET = "qKk0-kkTTz6AvMp4oJzXpQ";
-	
+	private static final Logger logger = Logger.getLogger(AlertGateway.class.getName());
+
 	public AlertGateway()
 	{
 		
@@ -35,13 +31,13 @@ public class AlertGateway {
 			User user = pm.getObjectById(User.class, n.getUserEmail());
 			if (user != null) {
 
-				URL url = new URL(URBAN_AIRSHIP_API);
+				URL url = new URL(Constants.URBAN_AIRSHIP_API);
 				HttpURLConnection connection = (HttpURLConnection) url
 						.openConnection();
 				connection.setRequestMethod("POST");
 				connection.setDoOutput(true);
 
-				String authString = AIRSHIP_ID + ":" + AIRSHIP_SECRET;
+				String authString = Constants.getAuthString();
 				String authStringBase64 = Base64.encodeBase64String(authString
 						.getBytes());
 				authStringBase64 = authStringBase64.trim();
