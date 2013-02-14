@@ -129,10 +129,17 @@ public class MailService {
 	}
 
 	private String getText(Part p) throws MessagingException, IOException {
-
+		
 		if (p.isMimeType("text/*")) {
 			String s = null;
 			try {
+				//TODO: investigate cast failure here (inputstream)
+				/*
+				 * options - could use code below, or use alternate parse method
+				 * StringWriter writer = new StringWriter();
+				 * IOUtils.copy(inputStream, writer, encoding);
+				 * String theString = writer.toString();
+				 */
 				s = (String) p.getContent();
 			} catch (Exception e) {
 				logger.log(Level.WARNING, "Error processing message body", e);
@@ -336,7 +343,7 @@ public class MailService {
 		}
 		
 		else {
-			logger.warning("Trying altnerate parse method on null message");
+			logger.warning("Trying altnerate parse method on message");
 			final Object content = message.getContent();
 			final StringBuffer sb = new StringBuffer();
 			
