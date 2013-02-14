@@ -1,11 +1,11 @@
 package com.gokaconsulting.notifyweb.service;
 
-public class UserDeleteException extends Exception {
+public class UserPasswordReset extends Exception {
 
 	private static final long serialVersionUID = 1L;
 	private String user;
 	
-	public UserDeleteException(String u)
+	public UserPasswordReset(String u)
 	{
 		this.user = u;
 	}

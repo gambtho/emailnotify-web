@@ -12,7 +12,7 @@ import com.gokaconsulting.notifyweb.service.PurgeService;
 
 public class PurgeServlet extends HttpServlet {
 	private static final long serialVersionUID = 6815532253864651508L;
-	private final Logger logger = Logger.getLogger(PurgeServlet.class.getName());
+	private static final Logger logger = Logger.getLogger(PurgeServlet.class.getName());
 
 	public void doGet(HttpServletRequest req, HttpServletResponse resp)
 			throws IOException {

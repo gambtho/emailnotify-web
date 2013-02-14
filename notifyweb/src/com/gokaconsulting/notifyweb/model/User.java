@@ -7,6 +7,7 @@ import com.google.gson.annotations.Expose;
 
 import java.io.Serializable;
 import java.util.Date;
+import java.util.logging.Logger;
 
 import javax.persistence.Transient;
 
@@ -17,7 +18,10 @@ import org.apache.commons.lang.RandomStringUtils;
 public class User implements Serializable {
 	@Transient
 	private static final long serialVersionUID = -5660588353160363359L;
-
+	
+	@Transient
+	private static final Logger logger = Logger.getLogger(User.class.getName());
+	
 	public User(String userAddress, String password, Date lastLogin) {
 		super();
 		this.userAddress = userAddress;
@@ -80,29 +84,43 @@ public class User implements Serializable {
 	
 	public void setPassword(String password)
 	{
-	    if (password.equals(this.password))
-	    {
-	        return;
-	    }
+		if (password != null) {
+			if (password.equals(this.password)) {
+				return;
+			}
 
-	    if (this.salt == null || this.salt.equals(""))
-	    {
-	        this.salt = RandomStringUtils.randomAscii(20);
-	    }
+			if (this.salt == null || this.salt.equals("")) {
+				this.salt = RandomStringUtils.randomAscii(20);
+			}
 
-	    this.password = DigestUtils.sha1Hex(password + this.salt);
-
+			this.password = DigestUtils.sha1Hex(password + this.salt);
+		} else {
+			this.password = null;
+		}
 	}
 
 	public boolean checkPassword(String givenPassword)
 	{
-	    return (this.password.equals(DigestUtils.sha1Hex(givenPassword + this.salt)));
+		if (this.password != null) {
+			return (this.password.equals(DigestUtils.sha1Hex(givenPassword
+					+ this.salt)));
+		}
+		return true;
 	}
 	
 	public int getUnRead() {
 		return unRead;
 	}
-
+	
+	public boolean isReset(){
+		
+		if(this.password == null)
+		{
+			return true;
+		}
+		return false;
+	}
+	
 	public void setUnRead(int unRead) {
 		this.unRead = unRead;
 	}

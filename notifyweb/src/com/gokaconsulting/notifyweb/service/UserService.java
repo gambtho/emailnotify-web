@@ -17,7 +17,7 @@ import com.gokaconsulting.notifyweb.model.User;
 
 public class UserService {
 
-	private final Logger logger = Logger.getLogger(UserService.class.getName());
+	private static final Logger logger = Logger.getLogger(UserService.class.getName());
 
 	public UserService() {
 
@@ -63,25 +63,37 @@ public class UserService {
 
 	public boolean checkUserPasswordforGet(String user, String token) {
 		PersistenceManager pm = PMF.get().getPersistenceManager();
+		
+		boolean isValid = false;
+		
 		try {
-			logger.info("Checking password");
+			
+			logger.info("Checking password for user: " + user);
 			User tempUser = pm.getObjectById(User.class, user);
 			if (tempUser.checkPassword(token))
 			{
-				logger.info("Password validated");
+				isValid = true;
+				
 				tempUser.setUnRead(0);
-				return true;
+				if(tempUser.isReset())
+				{
+					logger.warning("Setting password for previously reset user: " + user);
+					tempUser.setPassword(token);
+					pm.makePersistent(tempUser);
+				}
 			}
 			else
 			{
-				logger.info("Incorrect password");
-				return false;
+				logger.warning("Incorrect password entered for user: " + user);
+				isValid = false;
 			}
-		} catch (Exception e) {
-			return false;
-		} finally {
+			} catch (Exception e) {
+				logger.warning("Exception checking password: " + e);
+				isValid = false;
+			} finally {
 			pm.close();
 		}
+		return isValid;
 	}
 	
 	public void deleteAllMessages(String user) {

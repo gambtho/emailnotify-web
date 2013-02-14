@@ -24,7 +24,7 @@ import org.apache.commons.codec.binary.StringUtils;
 public class Notification implements Serializable {
 	
 	@Transient
-	private final Logger logger = Logger.getLogger(Notification.class.getName());
+	private static final Logger logger = Logger.getLogger(Notification.class.getName());
 	@Transient
 	private static final long serialVersionUID = -5660588353160363359L;
 

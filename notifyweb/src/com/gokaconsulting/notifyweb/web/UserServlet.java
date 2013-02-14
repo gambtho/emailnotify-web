@@ -15,7 +15,7 @@ import com.google.gson.GsonBuilder;
 
 public class UserServlet extends HttpServlet {
 	private static final long serialVersionUID = 6815532253864651508L;
-	private final Logger logger = Logger.getLogger(UserServlet.class.getName());
+	private static final Logger logger = Logger.getLogger(UserServlet.class.getName());
 
 	public void doPost(HttpServletRequest req, HttpServletResponse resp)
 			throws IOException {

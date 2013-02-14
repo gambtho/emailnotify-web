@@ -32,8 +32,12 @@ public class Constants {
 			if ((SystemProperty.environment.value() == SystemProperty.Environment.Value.Production)) {
 				isProd = true;
 			}
-			isProd = false;
-		}
+			else
+			{
+				isProd = false;
+			}	
+			logger.warning("System environment is " + SystemProperty.environment.value());
+		}	
 		return isProd;
 	}
 	

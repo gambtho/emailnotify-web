@@ -35,12 +35,10 @@ public class MailService {
 
 	private static final String legalString = "The information in this Internet Email is confidential and may be legally privileged. It is intended solely for the addressee. Access to this Email by anyone else is unauthorized. If you are not the intended recipient, any disclosure, copying, distribution or any action taken or omitted to be taken in reliance on it, is prohibited and may be unlawful. When addressed to our clients any opinions or advice contained in this Email are subject to the terms and conditions expressed in any applicable governing The Home Depot terms of business or client engagement letter. The Home Depot disclaims all responsibility and liability for the accuracy and content of this attachment and for any damages or losses arising from any inaccuracies, errors, viruses, e.g., worms, trojan horses, etc., or other items of a destructive nature, which may be contained in this attachment and shall not be liable for direct, indirect, consequential or special damage...";
 
-	// TODO: check environment if (SystemProperty.environment.value() ==
-	// SystemProperty.Environment.Value.Production)
 	private int unRead = 0;
 	private boolean textIsHtml = false;
 	private String userEmailAddress = "not set";
-	private final Logger logger = Logger.getLogger(MailHandlerServlet.class
+	private static final Logger logger = Logger.getLogger(MailHandlerServlet.class
 			.getName());
 
 	public void processEmail(MimeMessage message) throws MessagingException,
@@ -51,8 +49,8 @@ public class MailService {
 
 		try {
 			n = parseMessage(message);
-		} catch (UserDeleteException e) {
-			deleteUser(e.getUser());
+		} catch (UserPasswordReset e) {
+			clearUserPassword(e.getUser());
 			return;
 		} catch (DoNotPersistEmailException e) {
 			ag.sendAlert(e.getNotification(), unRead);
@@ -213,12 +211,13 @@ public class MailService {
 		}
 	}
 
-	private void deleteUser(String userEmail) {
+	private void clearUserPassword(String userEmail) {
 		PersistenceManager pm = PMF.get().getPersistenceManager();
-		logger.info("Delete requested for user: " + userEmail);
+		logger.warning("Password reset requested for user: " + userEmail);
 		User u = pm.getObjectById(User.class, userEmail);
-		pm.deletePersistent(u);
-		logger.info("Delete succesful for user: " + userEmail);
+		u.setPassword(null);
+		pm.makePersistent(u);
+		logger.info("Reset succesful for user: " + userEmail);
 		pm.close();
 	}
 
@@ -239,7 +238,7 @@ public class MailService {
 	}
 
 	private Notification parseMessage(MimeMessage message)
-			throws MessagingException, IOException, UserDeleteException,
+			throws MessagingException, IOException, UserPasswordReset,
 			DoNotPersistEmailException, UserDoesNotExistException,
 			DeleteAllException {
 
@@ -400,7 +399,7 @@ public class MailService {
 		if (userExists(userEmail)) {
 			if (toAddress.contentEquals("reset")) {
 				logger.info("Delete requested for user: " + fromAddress);
-				throw new UserDeleteException(userEmail);
+				throw new UserPasswordReset(userEmail);
 			} else if (toAddress.contentEquals("deleteall")) {
 				logger.info("Delete all requested for user: " + fromAddress);
 				throw new DeleteAllException(userEmail);
