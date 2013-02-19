@@ -1,4 +1,4 @@
-package com.gokaconsulting.notifyweb.gateway;
+package com.gokaconsulting.notifyweb.util;
 
 import java.util.logging.Logger;
 
@@ -13,8 +13,8 @@ public class Constants {
 	
 	private static Boolean isProd = null;
 	
-//	private static final String PR_AIRSHIP_ID = "jr-hH4hkSQO2mWDNA6e8Ag";
-//	private static final String PR_AIRSHIP_SECRET = "lOZCrOuvR92P_wSpWgkgFQ";	
+	private static final String PR_AIRSHIP_ID = "jr-hH4hkSQO2mWDNA6e8Ag";
+	private static final String PR_AIRSHIP_SECRET = "lOZCrOuvR92P_wSpWgkgFQ";	
 	
 	private static final String DEV_AIRSHIP_ID = "Bcwsh30hSEm7rUgIw7Z4pQ";
 	private static final String DEV_AIRSHIP_SECRET = "qKk0-kkTTz6AvMp4oJzXpQ";
@@ -49,8 +49,8 @@ public class Constants {
 			{
 				//TODO: switch this to PR
 				logger.info("Using PR Airship credentials (current same as dev)");
-				AIRSHIP_ID = DEV_AIRSHIP_ID;
-				AIRSHIP_SECRET = DEV_AIRSHIP_SECRET;
+				AIRSHIP_ID = PR_AIRSHIP_ID;
+				AIRSHIP_SECRET = PR_AIRSHIP_SECRET;
 			}
 			else
 			{
@@ -60,5 +60,10 @@ public class Constants {
 			}
 		}
 		return AIRSHIP_ID + ":" + AIRSHIP_SECRET;
+	}
+	
+	public static String getDevAuthString()
+	{
+		return DEV_AIRSHIP_ID + ":" + DEV_AIRSHIP_SECRET;
 	}
 }

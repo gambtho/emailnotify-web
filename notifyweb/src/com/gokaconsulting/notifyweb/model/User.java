@@ -57,7 +57,7 @@ public class User implements Serializable {
 		this.userAddress = userAddress;
 	}
 
-	public Boolean getValidated() {
+	public Boolean isValidated() {
 		return validated;
 	}
 

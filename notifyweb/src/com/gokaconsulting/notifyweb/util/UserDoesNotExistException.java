@@ -1,4 +1,4 @@
-package com.gokaconsulting.notifyweb.service;
+package com.gokaconsulting.notifyweb.util;
 
 public class UserDoesNotExistException extends Exception {
 

@@ -23,6 +23,10 @@ import com.gokaconsulting.notifyweb.dao.PMF;
 import com.gokaconsulting.notifyweb.gateway.AlertGateway;
 import com.gokaconsulting.notifyweb.model.Notification;
 import com.gokaconsulting.notifyweb.model.User;
+import com.gokaconsulting.notifyweb.util.DeleteAllException;
+import com.gokaconsulting.notifyweb.util.DoNotPersistEmailException;
+import com.gokaconsulting.notifyweb.util.UserDoesNotExistException;
+import com.gokaconsulting.notifyweb.util.UserPasswordResetException;
 import com.gokaconsulting.notifyweb.web.MailHandlerServlet;
 import com.google.appengine.api.datastore.Key;
 import com.google.appengine.api.datastore.KeyFactory;
@@ -49,7 +53,7 @@ public class MailService {
 
 		try {
 			n = parseMessage(message);
-		} catch (UserPasswordReset e) {
+		} catch (UserPasswordResetException e) {
 			clearUserPassword(e.getUser());
 			return;
 		} catch (DoNotPersistEmailException e) {
@@ -238,7 +242,7 @@ public class MailService {
 	}
 
 	private Notification parseMessage(MimeMessage message)
-			throws MessagingException, IOException, UserPasswordReset,
+			throws MessagingException, IOException, UserPasswordResetException,
 			DoNotPersistEmailException, UserDoesNotExistException,
 			DeleteAllException {
 
@@ -399,7 +403,7 @@ public class MailService {
 		if (userExists(userEmail)) {
 			if (toAddress.contentEquals("reset")) {
 				logger.info("Delete requested for user: " + fromAddress);
-				throw new UserPasswordReset(userEmail);
+				throw new UserPasswordResetException(userEmail);
 			} else if (toAddress.contentEquals("deleteall")) {
 				logger.info("Delete all requested for user: " + fromAddress);
 				throw new DeleteAllException(userEmail);

@@ -11,9 +11,9 @@ import javax.jdo.PersistenceManager;
 import javax.jdo.Query;
 
 import com.gokaconsulting.notifyweb.dao.PMF;
-import com.gokaconsulting.notifyweb.gateway.Constants;
 import com.gokaconsulting.notifyweb.model.Notification;
 import com.gokaconsulting.notifyweb.model.User;
+import com.gokaconsulting.notifyweb.util.Constants;
 
 public class UserService {
 
@@ -44,8 +44,13 @@ public class UserService {
 					}
 				}
 			} catch (JDOObjectNotFoundException e) {
-				logger.info("Creating user: " + user);
+				logger.warning("Creating user: " + user);
 				u = new User(user, token, new Date());
+				//TODO: Revisit this after in production
+				if(Constants.isProd())
+				{
+					u.setValidated(true);
+				}
 				pm.makePersistent(u);
 			}
 			if (u != null) {

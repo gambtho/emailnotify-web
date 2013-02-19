@@ -14,6 +14,7 @@ import com.gokaconsulting.notifyweb.dao.PMF;
 import com.gokaconsulting.notifyweb.model.Notification;
 import com.gokaconsulting.notifyweb.model.PushNotification;
 import com.gokaconsulting.notifyweb.model.User;
+import com.gokaconsulting.notifyweb.util.Constants;
 import com.google.gson.Gson;
 
 public class AlertGateway {
@@ -23,6 +24,19 @@ public class AlertGateway {
 	public AlertGateway()
 	{
 		
+	}
+	
+	private String getAuthString(Boolean isValidated, String userName)
+	{
+		if(isValidated == null || !isValidated)
+		{
+			logger.warning("Sending alert to non-validated user: " + userName);
+			return Constants.getDevAuthString();
+		}
+		else
+		{
+			return Constants.getAuthString();
+		}
 	}
 	
 	public void sendAlert(Notification n, int unRead) {
@@ -37,7 +51,8 @@ public class AlertGateway {
 				connection.setRequestMethod("POST");
 				connection.setDoOutput(true);
 
-				String authString = Constants.getAuthString();
+				String authString = this.getAuthString(user.isValidated(), user.getUserAddress());
+				
 				String authStringBase64 = Base64.encodeBase64String(authString
 						.getBytes());
 				authStringBase64 = authStringBase64.trim();

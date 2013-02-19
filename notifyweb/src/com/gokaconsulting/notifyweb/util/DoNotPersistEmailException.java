@@ -1,4 +1,4 @@
-package com.gokaconsulting.notifyweb.service;
+package com.gokaconsulting.notifyweb.util;
 
 import com.gokaconsulting.notifyweb.model.Notification;
 
