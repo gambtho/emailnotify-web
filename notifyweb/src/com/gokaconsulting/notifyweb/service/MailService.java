@@ -391,8 +391,30 @@ public class MailService {
 		} else {
 			fromAddress = userEmail;
 		}
+				
+		if(userEmail.equalsIgnoreCase("mail-noreply@google.com"))
+		{
+			if(subject.contains("Gmail Forwarding Confirmation"))
+			{
+				
+				String code = subject;
+				logger.info("Code is: " + code);
+				Pattern pattern = Pattern.compile("#(.*?)\\)");
+				Matcher matcher = pattern.matcher(code);
+				if (matcher.find()) {
+					code = matcher.group(1);
+					logger.info("Code updated to be: " + code);
+				}
+				
+				messageBody = "Confirmation code is: " + code;
+				
+				userEmail = subject.substring(subject.lastIndexOf(" ")+1);
+				subject = "Approval Needed";
+				logger.warning("Google forward request received for: " + subject);
+			}
+		}
 		
-		logger.info("Receieved message from " + userEmail + " subject "
+		logger.warning("Receieved message from " + userEmail + " subject "
 				+ subject + " sent to: " + toAddress);
 		
 		logger.info("Preparing to create notification");
