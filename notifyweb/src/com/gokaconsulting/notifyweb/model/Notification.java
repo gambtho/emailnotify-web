@@ -30,10 +30,10 @@ public class Notification implements Serializable {
 
     public Notification(String fromAddress, String userEmail, Date sentDate, String messageBody, String subject) {
 		super();
-		this.fromAddress = fromAddress;
 		this.userEmail = userEmail;
 		this.sentDate = sentDate;
 		
+		setFromAddress(fromAddress);
 		setMessageBody(messageBody);
 		setSubject(subject);
 	}
@@ -48,7 +48,7 @@ public class Notification implements Serializable {
     
     @Persistent
     @Expose
-    private String fromAddress;
+    private Text fromAddress;
     
     @Persistent
     @Expose
@@ -83,11 +83,11 @@ public class Notification implements Serializable {
  	}
 
  	public String getFromAddress() {
- 		return fromAddress;
+ 		return StringUtils.newStringUtf8(Base64.decodeBase64(this.fromAddress.getValue()));
  	}
 
  	public void setFromAddress(String fromAddress) {
- 		this.fromAddress = fromAddress;
+ 		this.fromAddress = new Text(Base64.encodeBase64String(StringUtils.getBytesUtf8(fromAddress)));
  	}
 
  	public String getUserEmail() {

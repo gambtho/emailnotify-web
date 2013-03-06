@@ -16,9 +16,15 @@ public class PurgeServlet extends HttpServlet {
 
 	public void doGet(HttpServletRequest req, HttpServletResponse resp)
 			throws IOException {
-		logger.info("Beginning purge process");
+		logger.warning("Beginning purge process");
 		PurgeService purgeService = new PurgeService();
-		purgeService.purge();
-		logger.warning("Completed purge process");
+		String days = req.getParameter("days");
+		if(days!=null){
+			purgeService.purge(Integer.parseInt(days));
+		}
+		else {
+			logger.severe("Purging all messages");
+			purgeService.purge();
+		}	
 	}
 }

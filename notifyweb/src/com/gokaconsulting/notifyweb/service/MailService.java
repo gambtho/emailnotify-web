@@ -346,7 +346,7 @@ public class MailService {
 		}
 		
 		else {
-			logger.warning("Trying altnerate parse method on message");
+			logger.info("Trying altnerate parse method on message");
 			final Object content = message.getContent();
 			final StringBuffer sb = new StringBuffer();
 			
@@ -363,7 +363,7 @@ public class MailService {
             }
             else
             {
-            	logger.warning("Message is of type: " + content.getClass().getName());
+            	logger.info("Message is of type: " + content.getClass().getName());
             }
             
             messageBody = sb.toString();
@@ -410,11 +410,11 @@ public class MailService {
 				
 				userEmail = subject.substring(subject.lastIndexOf(" ")+1);
 				subject = "Approval Needed";
-				logger.warning("Google forward request received for: " + subject);
+				logger.info("Google forward request received for: " + subject);
 			}
 		}
 		
-		logger.warning("Receieved message from " + userEmail + " subject "
+		logger.info("Receieved message from " + userEmail + " subject "
 				+ subject + " sent to: " + toAddress);
 		
 		logger.info("Preparing to create notification");
